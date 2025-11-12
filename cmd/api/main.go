@@ -5,9 +5,7 @@ import (
 	"database/sql"
 	"feel-flow-api/internal/data"
 	"flag"
-	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"time"
 
@@ -60,20 +58,11 @@ func main() {
 		},
 	}
 
-	apiServer := &http.Server{
-		Addr:         fmt.Sprintf(":%d", settings.port),
-		Handler:      appInstance.routes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
+	err = appInstance.serve()
+	if err != nil {
+    	logger.Error(err.Error())
+    	os.Exit(1)
 	}
-
-	logger.Info("starting server", "address", apiServer.Addr, "environment", settings.env)
-
-	err = apiServer.ListenAndServe()
-	logger.Error(err.Error())
-	os.Exit(1)
 }
 
 func openDB(settings serverConfig) (*sql.DB, error) {
