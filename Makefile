@@ -4,7 +4,15 @@ include .envrc
 .PHONY: run
 run:
 	@echo 'Running application...'
-	@go run ./cmd/api -db-dsn=${FEEL_FLOW_DB_DSN}
+	@go run ./cmd/api \
+	-port=4000 \
+	-env=development \
+	-db-dsn=${FEEL_FLOW_DB_DSN} \
+	-smtp-host=${SMTP_HOST} \
+	-smtp-port=${SMTP_PORT} \
+	-smtp-username=${SMTP_USERNAME} \
+	-smtp-password=${SMTP_PASSWORD} \
+	-smtp-sender=${SMTP_SENDER} \
 
 ## db/psql: connect to the database using psql (terminal)
 .PHONY: db/psql

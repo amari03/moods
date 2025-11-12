@@ -12,20 +12,22 @@ func (a *applicationDependencies) routes() http.Handler {
 	router.NotFound = http.HandlerFunc(a.notFoundResponse)
 	router.MethodNotAllowed = http.HandlerFunc(a.methodNotAllowedResponse)
 
-	// Register handlers
+	// HealthCheck handler
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", a.healthCheckHandler)
-	router.HandlerFunc(http.MethodPost, "/v1/moods", a.createMoodHandler)
-	router.HandlerFunc(http.MethodGet, "/v1/moods/:id", a.showMoodHandler)
-	router.HandlerFunc(http.MethodGet, "/v1/moods", a.listMoodsHandler)
-	router.HandlerFunc(http.MethodPatch, "/v1/moods/:id", a.updateMoodHandler)
-	router.HandlerFunc(http.MethodDelete, "/v1/moods/:id", a.deleteMoodHandler)
 
-	// User routes
+	// Mood routes (ALL PROTECTED)
+	router.HandlerFunc(http.MethodGet, "/v1/moods", a.requireActivatedUser(a.listMoodsHandler))
+	router.HandlerFunc(http.MethodPost, "/v1/moods", a.requireActivatedUser(a.createMoodHandler))
+	router.HandlerFunc(http.MethodGet, "/v1/moods/:id", a.requireActivatedUser(a.showMoodHandler))
+	router.HandlerFunc(http.MethodPatch, "/v1/moods/:id", a.requireActivatedUser(a.updateMoodHandler))
+	router.HandlerFunc(http.MethodDelete, "/v1/moods/:id", a.requireActivatedUser(a.deleteMoodHandler))
+
+	// User routes (some public, some protected)
 	router.HandlerFunc(http.MethodPost, "/v1/users", a.registerUserHandler)
 	router.HandlerFunc(http.MethodPut, "/v1/users/activated", a.activateUserHandler)
-	// Add Update and Delete routes, wrapped in middleware
+	router.HandlerFunc(http.MethodPost, "/v1/tokens/authentication", a.createAuthenticationTokenHandler) // Add this route
 	router.HandlerFunc(http.MethodPatch, "/v1/users/:id", a.requireActivatedUser(a.updateUserHandler))
 	router.HandlerFunc(http.MethodDelete, "/v1/users/:id", a.requireActivatedUser(a.deleteUserHandler))
-
+	
 	return a.recoverPanic(a.rateLimit(a.authenticate(router)))
 }

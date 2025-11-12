@@ -51,14 +51,14 @@ func main() {
 
 	flag.IntVar(&settings.port, "port", 4000, "Server port")
 	flag.StringVar(&settings.env, "env", "development", "Environment (development|staging|production)")
-	flag.StringVar(&settings.db.dsn, "db-dsn", "postgres://moods:fishsticks@localhost/moods?sslmode=disable", "PostgreSQL DSN")
+	flag.StringVar(&settings.db.dsn, "db-dsn", os.Getenv("FEEL_FLOW_DB_DSN"), "PostgreSQL DSN")
 
 	// Add SMTP flags
-	flag.StringVar(&settings.smtp.host, "smtp-host", "sandbox.smtp.mailtrap.io", "SMTP host")
+	flag.StringVar(&settings.smtp.host, "smtp-host", os.Getenv("SMTP_HOST"), "SMTP host")
 	flag.IntVar(&settings.smtp.port, "smtp-port", 2525, "SMTP port")
-	flag.StringVar(&settings.smtp.username, "smtp-username", "your-mailtrap-username", "SMTP username")
-	flag.StringVar(&settings.smtp.password, "smtp-password", "your-mailtrap-password", "SMTP password")
-	flag.StringVar(&settings.smtp.sender, "smtp-sender", "Feel Flow <no-reply@yourdomain.com>", "SMTP sender")
+	flag.StringVar(&settings.smtp.username, "smtp-username", os.Getenv("SMTP_USERNAME"), "SMTP username")
+	flag.StringVar(&settings.smtp.password, "smtp-password", os.Getenv("SMTP_PASSWORD"), "SMTP password")
+	flag.StringVar(&settings.smtp.sender, "smtp-sender", os.Getenv("SMTP_SENDER"), "SMTP sender")
 
 	flag.Parse()
 
