@@ -6,6 +6,11 @@ run:
 	@echo 'Running application...'
 	@go run ./cmd/api -db-dsn=${FEEL_FLOW_DB_DSN}
 
+## db/psql: connect to the database using psql (terminal)
+.PHONY: db/psql
+db/psql:
+	psql ${FEEL_FLOW_DB_DSN}
+
 ## db/migrations/new: create a new database migration
 .PHONY: db/migrations/new
 db/migrations/new:

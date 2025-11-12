@@ -71,25 +71,9 @@ func main() {
 
 	logger.Info("starting server", "address", apiServer.Addr, "environment", settings.env)
 
-	err := apiServer.ListenAndServe()
+	err = apiServer.ListenAndServe()
 	logger.Error(err.Error())
 	os.Exit(1)
-}
-
-func (a *applicationDependencies) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
-    data := envelope{
-        "status": "available",
-        "system_info": map[string]string{
-            "environment": a.config.env,
-            "version":     appVersion,
-        },
-    }
-
-    err := a.writeJSON(w, http.StatusOK, data, nil)
-    if err != nil {
-        a.logger.Error(err.Error())
-        http.Error(w, "The server encountered a problem and could not process your request", http.StatusInternalServerError)
-    }
 }
 
 func openDB(settings serverConfig) (*sql.DB, error) {
