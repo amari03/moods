@@ -1,16 +1,17 @@
 package main
 
 import (
+	"context"
+	"database/sql"
+	"feel-flow-api/internal/data"
 	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
-	"context"
-	"database/sql"
 
-	_"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 const appVersion = "1.0.0"
@@ -26,6 +27,11 @@ type serverConfig struct {
 type applicationDependencies struct {
 	config serverConfig
 	logger *slog.Logger
+	models data.Models
+}
+
+type Models struct{
+	Moods data.MoodModel
 }
 
 func main() {
@@ -49,14 +55,14 @@ func main() {
 	appInstance := &applicationDependencies{
 		config: settings,
 		logger: logger,
+		models: data.Models{
+			Moods: data.MoodModel{DB: db},
+		},
 	}
-
-	router := http.NewServeMux()
-	router.HandleFunc("/v1/healthcheck", appInstance.healthCheckHandler)
 
 	apiServer := &http.Server{
 		Addr:         fmt.Sprintf(":%d", settings.port),
-		Handler:      router,
+		Handler:      appInstance.routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
