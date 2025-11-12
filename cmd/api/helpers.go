@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+    "net/url"
 	"errors"
 	"strconv"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"fmt"
 
 	"github.com/julienschmidt/httprouter"
+    "feel-flow-api/internal/validator"
 )
 
 type envelope map[string]interface{}
@@ -95,4 +97,27 @@ func (a *applicationDependencies) readIDParam(r *http.Request) (int64, error) {
 	}
 
 	return id, nil
+}
+
+// getSingleQueryParameter reads a string value from the query string, with a default.
+func (a *applicationDependencies) getSingleQueryParameter(qs url.Values, key, defaultValue string) string {
+	s := qs.Get(key)
+	if s == "" {
+		return defaultValue
+	}
+	return s
+}
+
+// getSingleIntegerParameter reads an integer value from the query string, with a default.
+func (a *applicationDependencies) getSingleIntegerParameter(qs url.Values, key string, defaultValue int, v *validator.Validator) int {
+	s := qs.Get(key)
+	if s == "" {
+		return defaultValue
+	}
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		v.AddError(key, "must be an integer value")
+		return defaultValue
+	}
+	return i
 }
