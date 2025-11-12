@@ -132,3 +132,106 @@ func (a *applicationDependencies) activateUserHandler(w http.ResponseWriter, r *
 		a.serverErrorResponse(w, r, err)
 	}
 }
+
+func (a *applicationDependencies) updateUserHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := a.readIDParam(r)
+	if err != nil {
+		a.notFoundResponse(w, r)
+		return
+	}
+
+	// Get the currently authenticated user from the request context.
+	// We will implement this helper function in the next section.
+	user := a.contextGetUser(r)
+
+	// Check if the ID from the URL matches the authenticated user's ID.
+	if user.ID != id {
+		a.notPermittedResponse(w, r) // We will create this helper.
+		return
+	}
+
+	var input struct {
+		Name     *string `json:"name"`
+		Email    *string `json:"email"`
+		Password *string `json:"password"`
+	}
+
+	err = a.readJSON(w, r, &input)
+	if err != nil {
+		a.badRequestResponse(w, r, err)
+		return
+	}
+
+	// Update fields if they were provided in the request.
+	if input.Name != nil {
+		user.Name = *input.Name
+	}
+	if input.Email != nil {
+		user.Email = *input.Email
+	}
+	if input.Password != nil {
+		err = user.Password.Set(*input.Password)
+		if err != nil {
+			a.serverErrorResponse(w, r, err)
+			return
+		}
+	}
+
+	v := validator.New()
+	if data.ValidateUser(v, user); !v.IsEmpty() {
+		a.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	err = a.models.Users.Update(user)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			a.editConflictResponse(w, r)
+		case errors.Is(err, data.ErrDuplicateEmail):
+			v.AddError("email", "a user with this email address already exists")
+			a.failedValidationResponse(w, r, v.Errors)
+		default:
+			a.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = a.writeJSON(w, http.StatusOK, envelope{"user": user}, nil)
+	if err != nil {
+		a.serverErrorResponse(w, r, err)
+	}
+}
+
+func (a *applicationDependencies) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := a.readIDParam(r)
+	if err != nil {
+		a.notFoundResponse(w, r)
+		return
+	}
+	
+	// Get the authenticated user.
+	user := a.contextGetUser(r)
+
+	// A user can only delete themselves.
+	if user.ID != id {
+		a.notPermittedResponse(w, r)
+		return
+	}
+
+	err = a.models.Users.Delete(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			a.notFoundResponse(w, r)
+		default:
+			a.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = a.writeJSON(w, http.StatusOK, envelope{"message": "user successfully deleted"}, nil)
+	if err != nil {
+		a.serverErrorResponse(w, r, err)
+	}
+}

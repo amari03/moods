@@ -1,27 +1,41 @@
 package main
 
 import (
+	"errors"
+	"feel-flow-api/internal/data"
+	"feel-flow-api/internal/validator"
+	"golang.org/x/time/rate"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
-
-	"golang.org/x/time/rate"
 )
 
-func (a *applicationDependencies) rateLimit(next http.Handler) http.Handler {
-	// Define a client struct to hold the rate limiter and last seen time for each client.
+// recoverPanic recovers from any panics and responds with a 500 Internal Server Error.
+func (a *applicationDependencies) recoverPanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				w.Header().Set("Connection", "close")
+				a.serverErrorResponse(w, r, errors.New(err.(string)))
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
+// rateLimit is middleware for IP-based rate limiting.
+func (app *applicationDependencies) rateLimit(next http.Handler) http.Handler {
 	type client struct {
 		limiter  *rate.Limiter
 		lastSeen time.Time
 	}
-
 	var (
 		mu      sync.Mutex
 		clients = make(map[string]*client)
 	)
 
-	// Launch a background goroutine to remove old entries from the clients map.
 	go func() {
 		for {
 			time.Sleep(time.Minute)
@@ -38,27 +52,92 @@ func (a *applicationDependencies) rateLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
-			a.serverErrorResponse(w, r, err)
+			app.serverErrorResponse(w, r, err)
 			return
 		}
 
 		mu.Lock()
-
 		if _, found := clients[ip]; !found {
-			// Create a new rate limiter for the IP, allowing 2 requests per second with a burst of 5.
-			clients[ip] = &client{limiter: rate.NewLimiter(2, 5)}
+			clients[ip] = &client{limiter: rate.NewLimiter(2, 4)} // 2 requests/sec, burst of 4
 		}
-
 		clients[ip].lastSeen = time.Now()
 
 		if !clients[ip].limiter.Allow() {
 			mu.Unlock()
-			a.rateLimitExceededResponse(w, r)
+			app.rateLimitExceededResponse(w, r)
 			return
 		}
-
 		mu.Unlock()
 
 		next.ServeHTTP(w, r)
 	})
+}
+/*
+func (app *applicationDependencies) rateLimitExceededResponse(w http.ResponseWriter, r *http.Request) {
+	message := "rate limit exceeded"
+	app.errorResponse(w, r, http.StatusTooManyRequests, message)
+}*/
+
+// authenticate checks for a bearer token and adds the user to the request context.
+func (a *applicationDependencies) authenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Vary", "Authorization")
+		authorizationHeader := r.Header.Get("Authorization")
+		if authorizationHeader == "" {
+			r = a.contextSetUser(r, data.AnonymousUser)
+			next.ServeHTTP(w, r)
+			return
+		}
+		headerParts := strings.Split(authorizationHeader, " ")
+		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+			a.invalidAuthenticationTokenResponse(w, r)
+			return
+		}
+		token := headerParts[1]
+		v := validator.New()
+		if data.ValidateTokenPlaintext(v, token); !v.IsEmpty() {
+			a.invalidAuthenticationTokenResponse(w, r)
+			return
+		}
+		user, err := a.models.Users.GetForToken(data.ScopeAuthentication, token)
+		if err != nil {
+			switch {
+			case errors.Is(err, data.ErrRecordNotFound):
+				a.invalidAuthenticationTokenResponse(w, r)
+			default:
+				a.serverErrorResponse(w, r, err)
+			}
+			return
+		}
+		r = a.contextSetUser(r, user)
+		next.ServeHTTP(w, r)
+	})
+}
+
+// --- NEW AUTHORIZATION MIDDLEWARE ---
+
+// requireAuthenticatedUser checks if a user is authenticated (not anonymous).
+func (a *applicationDependencies) requireAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := a.contextGetUser(r)
+		if user.IsAnonymous() {
+			a.authenticationRequiredResponse(w, r)
+			return
+		}
+		next.ServeHTTP(w, r)
+	}
+}
+
+// requireActivatedUser checks if a user is both authenticated and activated.
+func (a *applicationDependencies) requireActivatedUser(next http.HandlerFunc) http.HandlerFunc {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		user := a.contextGetUser(r)
+		if !user.Activated {
+			a.inactiveAccountResponse(w, r)
+			return
+		}
+		next.ServeHTTP(w, r)
+	}
+	// Wrap fn with the requireAuthenticatedUser middleware to ensure the user is not anonymous.
+	return a.requireAuthenticatedUser(fn)
 }

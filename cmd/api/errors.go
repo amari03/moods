@@ -56,3 +56,29 @@ func (a *applicationDependencies) editConflictResponse(w http.ResponseWriter, r 
 	message := "unable to update the record due to an edit conflict, please try again"
 	a.errorResponseJSON(w, r, http.StatusConflict, message)
 }
+
+func (a *applicationDependencies) notPermittedResponse(w http.ResponseWriter, r *http.Request) {
+	message := "you are not permitted to perform this action"
+	a.errorResponseJSON(w, r, http.StatusForbidden, message)
+}
+
+func (a *applicationDependencies) invalidCredentialsResponse(w http.ResponseWriter, r *http.Request) {
+	message := "invalid authentication credentials"
+	a.errorResponseJSON(w, r, http.StatusUnauthorized, message)
+}
+
+func (a *applicationDependencies) invalidAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("WWW-Authenticate", "Bearer")
+	message := "invalid or missing authentication token"
+	a.errorResponseJSON(w, r, http.StatusUnauthorized, message)
+}
+
+func (a *applicationDependencies) authenticationRequiredResponse(w http.ResponseWriter, r *http.Request) {
+	message := "you must be authenticated to access this resource"
+	a.errorResponseJSON(w, r, http.StatusUnauthorized, message)
+}
+
+func (a *applicationDependencies) inactiveAccountResponse(w http.ResponseWriter, r *http.Request) {
+	message := "your user account must be activated to access this resource"
+	a.errorResponseJSON(w, r, http.StatusForbidden, message)
+}

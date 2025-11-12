@@ -163,14 +163,17 @@ func (m *UserModel) Update(user *User) error {
 
     err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.Version)
     if err != nil {
-        if err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"` {
+        switch{
+        case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
             return ErrDuplicateEmail
-        }
-        if errors.Is(err, sql.ErrNoRows) {
+        
+        case errors.Is(err, sql.ErrNoRows):
             return ErrEditConflict
-        }
+
+        default:
         return err
     }
+}
     return nil
 }
 
@@ -207,4 +210,25 @@ func (m *UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error
         return nil, err
     }
     return &user, nil
+}
+
+func (m *UserModel) Delete(id int64) error {
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+	query := `DELETE FROM users WHERE id = $1`
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	result, err := m.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+	return nil
 }

@@ -20,8 +20,12 @@ func (a *applicationDependencies) routes() http.Handler {
 	router.HandlerFunc(http.MethodPatch, "/v1/moods/:id", a.updateMoodHandler)
 	router.HandlerFunc(http.MethodDelete, "/v1/moods/:id", a.deleteMoodHandler)
 
+	// User routes
 	router.HandlerFunc(http.MethodPost, "/v1/users", a.registerUserHandler)
 	router.HandlerFunc(http.MethodPut, "/v1/users/activated", a.activateUserHandler)
+	// Add Update and Delete routes, wrapped in middleware
+	router.HandlerFunc(http.MethodPatch, "/v1/users/:id", a.requireActivatedUser(a.updateUserHandler))
+	router.HandlerFunc(http.MethodDelete, "/v1/users/:id", a.requireActivatedUser(a.deleteUserHandler))
 
-	return a.rateLimit(router)
+	return a.recoverPanic(a.rateLimit(a.authenticate(router)))
 }
