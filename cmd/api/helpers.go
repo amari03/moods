@@ -121,3 +121,16 @@ func (a *applicationDependencies) getSingleIntegerParameter(qs url.Values, key s
 	}
 	return i
 }
+
+func (a *applicationDependencies) background(fn func()) {
+	a.wg.Add(1)
+	go func() {
+		defer a.wg.Done()
+		defer func() {
+			if err := recover(); err != nil {
+				a.logger.Error(fmt.Sprintf("%v", err))
+			}
+		}()
+		fn()
+	}()
+}

@@ -20,5 +20,8 @@ func (a *applicationDependencies) routes() http.Handler {
 	router.HandlerFunc(http.MethodPatch, "/v1/moods/:id", a.updateMoodHandler)
 	router.HandlerFunc(http.MethodDelete, "/v1/moods/:id", a.deleteMoodHandler)
 
+	router.HandlerFunc(http.MethodPost, "/v1/users", a.registerUserHandler)
+	router.HandlerFunc(http.MethodPut, "/v1/users/activated", a.activateUserHandler)
+
 	return a.rateLimit(router)
 }

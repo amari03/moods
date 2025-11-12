@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"database/sql"
-	"feel-flow-api/internal/data"
 	"flag"
 	"log/slog"
 	"os"
 	"time"
+	"sync"
+	//"strings"
+
+	"feel-flow-api/internal/mailer"
+	"feel-flow-api/internal/data"
 
 	_ "github.com/lib/pq"
 )
@@ -20,16 +24,26 @@ type serverConfig struct {
 	db struct {
 		dsn string
 	}
+	smtp struct {
+		host string
+		port int
+		username string
+		password string
+		sender string
+	}
 }
 
 type applicationDependencies struct {
 	config serverConfig
 	logger *slog.Logger
 	models data.Models
+	mailer mailer.Mailer 
+	wg     sync.WaitGroup
 }
 
 type Models struct{
 	Moods data.MoodModel
+	Users data.UserModel
 }
 
 func main() {
@@ -38,6 +52,14 @@ func main() {
 	flag.IntVar(&settings.port, "port", 4000, "Server port")
 	flag.StringVar(&settings.env, "env", "development", "Environment (development|staging|production)")
 	flag.StringVar(&settings.db.dsn, "db-dsn", "postgres://moods:fishsticks@localhost/moods?sslmode=disable", "PostgreSQL DSN")
+
+	// Add SMTP flags
+	flag.StringVar(&settings.smtp.host, "smtp-host", "sandbox.smtp.mailtrap.io", "SMTP host")
+	flag.IntVar(&settings.smtp.port, "smtp-port", 2525, "SMTP port")
+	flag.StringVar(&settings.smtp.username, "smtp-username", "your-mailtrap-username", "SMTP username")
+	flag.StringVar(&settings.smtp.password, "smtp-password", "your-mailtrap-password", "SMTP password")
+	flag.StringVar(&settings.smtp.sender, "smtp-sender", "Feel Flow <no-reply@yourdomain.com>", "SMTP sender")
+
 	flag.Parse()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
@@ -53,9 +75,8 @@ func main() {
 	appInstance := &applicationDependencies{
 		config: settings,
 		logger: logger,
-		models: data.Models{
-			Moods: data.MoodModel{DB: db},
-		},
+		models: data.NewModels(db),
+		mailer: mailer.New(settings.smtp.host, settings.smtp.port, settings.smtp.username, settings.smtp.password, settings.smtp.sender),
 	}
 
 	err = appInstance.serve()

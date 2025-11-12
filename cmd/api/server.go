@@ -35,6 +35,10 @@ func (a *applicationDependencies) serve() error {
 		defer cancel()
 
 		shutdownError <- apiServer.Shutdown(ctx)
+
+		a.logger.Info("completing background tasks", "address", apiServer.Addr)
+		a.wg.Wait()
+		shutdownError <- nil
 	}()
 
 	a.logger.Info("starting server", "address", apiServer.Addr, "environment", a.config.env)

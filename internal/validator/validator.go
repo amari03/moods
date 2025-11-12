@@ -1,6 +1,12 @@
 package validator
 
-import "slices"
+import (
+	"slices"
+	"regexp"
+)
+
+// Declare EmailRX at the package level.
+var EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 // Validator holds a map of validation errors.
 type Validator struct {
@@ -34,4 +40,8 @@ func (v *Validator) Check(ok bool, key, message string) {
 // PermittedValue returns true if a value is in a list of permitted strings.
 func PermittedValue(value string, permittedValues ...string) bool {
 	return slices.Contains(permittedValues, value)
+}
+
+func Matches(value string, rx *regexp.Regexp) bool {
+	return rx.MatchString(value)
 }
