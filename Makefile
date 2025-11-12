@@ -1,5 +1,19 @@
+include .envrc
+
 ## run: run the cmd/api application
 .PHONY: run
 run:
 	@echo 'Running application...'
-	@go run ./cmd/api
+	@go run ./cmd/api -db-dsn=${FEEL_FLOW_DB_DSN}
+
+## db/migrations/new: create a new database migration
+.PHONY: db/migrations/new
+db/migrations/new:
+	@echo 'Creating migration files for ${name}...'
+	migrate create -seq -ext=.sql -dir=./migrations ${name}
+
+## db/migrations/up: apply all up database migrations
+.PHONY: db/migrations/up
+db/migrations/up:
+	@echo 'Running up migrations...'
+	migrate -path ./migrations -database ${FEEL_FLOW_DB_DSN} up
