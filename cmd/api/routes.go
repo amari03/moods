@@ -29,5 +29,5 @@ func (a *applicationDependencies) routes() http.Handler {
 	router.HandlerFunc(http.MethodPatch, "/v1/users/:id", a.requireActivatedUser(a.updateUserHandler))
 	router.HandlerFunc(http.MethodDelete, "/v1/users/:id", a.requireActivatedUser(a.deleteUserHandler))
 	
-	return a.recoverPanic(a.rateLimit(a.authenticate(router)))
+	return a.recoverPanic(a.enableCORS(a.rateLimit(a.authenticate(router))))
 }

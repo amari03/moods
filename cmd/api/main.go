@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 	"sync"
-	//"strings"
+	"strings"
 
 	"feel-flow-api/internal/mailer"
 	"feel-flow-api/internal/data"
@@ -30,6 +30,9 @@ type serverConfig struct {
 		username string
 		password string
 		sender string
+	}
+	cors struct {
+		trustedOrigins []string
 	}
 }
 
@@ -59,6 +62,11 @@ func main() {
 	flag.StringVar(&settings.smtp.username, "smtp-username", os.Getenv("SMTP_USERNAME"), "SMTP username")
 	flag.StringVar(&settings.smtp.password, "smtp-password", os.Getenv("SMTP_PASSWORD"), "SMTP password")
 	flag.StringVar(&settings.smtp.sender, "smtp-sender", os.Getenv("SMTP_SENDER"), "SMTP sender")
+
+	flag.Func("cors-trusted-origins", "Trusted CORS origins (space separated)", func(val string) error {
+		settings.cors.trustedOrigins = strings.Fields(val)
+		return nil
+	})
 
 	flag.Parse()
 
