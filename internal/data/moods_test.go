@@ -1,90 +1,118 @@
 package data
 
 import (
-	"database/sql"
-	"regexp"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 )
 
-// Helper function for MoodModel tests
-func NewMockMoodModel() (*sql.DB, sqlmock.Sqlmock, MoodModel) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		panic("An error occurred while creating a mock database connection")
-	}
-	return db, mock, MoodModel{DB: db}
-}
-
-func TestMoodModel_Insert(t *testing.T) {
-	db, mock, moodModel := NewMockMoodModel()
-	defer db.Close()
-
-	testMood := &Mood{
-		Title:   "Feeling Great",
-		Content: "The tests are working!",
-		Emotion: "Happy",
-		Emoji:   "😄",
-		Color:   "#FFD700",
-		UserID:  1,
+func TestMoodModel_Integration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
 	}
 
-	query := regexp.QuoteMeta(`
-		INSERT INTO moods (title, content, emotion, emoji, color, user_id)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, created_at, updated_at`)
+	// === Test Insert() and Get() ===
+	t.Run("Insert and Get", func(t *testing.T) {
+		db, teardown := newTestDB(t)
+		defer teardown()
 
-	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).
-		AddRow(1, time.Now(), time.Now())
+		// Initialize our models with the test database.
+		moodModel := MoodModel{DB: db}
+		userModel := UserModel{DB: db} // We need this to create a user first.
 
-	mock.ExpectQuery(query).
-		WithArgs(testMood.Title, testMood.Content, testMood.Emotion, testMood.Emoji, testMood.Color, testMood.UserID).
-		WillReturnRows(rows)
+		// 1. Create a dummy user to associate the mood with.
+		user := &User{
+			Name: "Test User",
+			Email: "test@example.com",
+			Activated: true,
+		}
+		err := user.Password.Set("password123")
+		assert.NoError(t, err)
+		err = userModel.Insert(user)
+		assert.NoError(t, err)
 
-	err := moodModel.Insert(testMood)
+		// 2. Define and insert a new mood.
+		mood := &Mood{
+			Title:   "Integration Test Mood",
+			Content: "This is a test from a real database.",
+			Emotion: "Focused",
+			Emoji:   "🔬",
+			Color:   "#CCCCCC",
+			UserID:  user.ID, // Associate with the user we just created.
+		}
 
-	assert.NoError(t, err)
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
+		err = moodModel.Insert(mood)
+		assert.NoError(t, err)
+		assert.NotZero(t, mood.ID) // Check that the DB assigned an ID.
 
-func TestMoodModel_Get(t *testing.T) {
-	db, mock, moodModel := NewMockMoodModel()
-	defer db.Close()
+		// 3. Retrieve the mood we just inserted.
+		retrievedMood, err := moodModel.Get(mood.ID)
+		assert.NoError(t, err)
+		assert.NotNil(t, retrievedMood)
 
-	query := regexp.QuoteMeta(`
-		SELECT id, created_at, updated_at, title, content, emotion, emoji, color
-		FROM moods
-		WHERE id = $1`)
+		// 4. Assert that the retrieved data is correct.
+		assert.Equal(t, mood.ID, retrievedMood.ID)
+		assert.Equal(t, "Integration Test Mood", retrievedMood.Title)
+		assert.Equal(t, "Focused", retrievedMood.Emotion)
+		assert.WithinDuration(t, mood.CreatedAt, retrievedMood.CreatedAt, time.Second) // Check timestamps are close.
+	})
 
-	rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at", "title", "content", "emotion", "emoji", "color"}).
-		AddRow(1, time.Now(), time.Now(), "Test Title", "Test Content", "Test Emotion", "😊", "#FFFFFF")
+	// === Test Update() ===
+	t.Run("Update", func(t *testing.T) {
+		db, teardown := newTestDB(t)
+		defer teardown()
 
-	mock.ExpectQuery(query).WithArgs(1).WillReturnRows(rows)
+		moodModel := MoodModel{DB: db}
+		userModel := UserModel{DB: db}
+		
+		// Setup: Insert a user and a mood to update.
+		user := &User{ Name: "Test User", Email: "test@example.com", Activated: true }
+		_ = user.Password.Set("password123")
+		_ = userModel.Insert(user)
+		mood := &Mood{ Title: "Original Title", Content: "Original Content", Emotion: "Neutral", Emoji: "😐", Color: "#AAAAAA", UserID: user.ID }
+		_ = moodModel.Insert(mood)
 
-	mood, err := moodModel.Get(1)
+		// Modify the mood data.
+		mood.Title = "Updated Title"
+		mood.Content = "This content has been updated."
 
-	assert.NoError(t, err)
-	assert.NotNil(t, mood)
-	assert.Equal(t, int64(1), mood.ID)
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
+		// Perform the update.
+		err := moodModel.Update(mood)
+		assert.NoError(t, err)
 
-func TestMoodModel_Delete(t *testing.T) {
-	db, mock, moodModel := NewMockMoodModel()
-	defer db.Close()
+		// Retrieve the mood again to verify the changes.
+		updatedMood, err := moodModel.Get(mood.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, "Updated Title", updatedMood.Title)
+		assert.Equal(t, "This content has been updated.", updatedMood.Content)
+	})
+	
+	// === Test Delete() ===
+	t.Run("Delete", func(t *testing.T) {
+		db, teardown := newTestDB(t)
+		defer teardown()
 
-	query := regexp.QuoteMeta(`DELETE FROM moods WHERE id = $1`)
-
-	// sqlmock.NewResult(lastInsertId, rowsAffected)
-	result := sqlmock.NewResult(0, 1)
-
-	mock.ExpectExec(query).WithArgs(1).WillReturnResult(result)
-
-	err := moodModel.Delete(1)
-
-	assert.NoError(t, err)
-	assert.NoError(t, mock.ExpectationsWereMet())
+		moodModel := MoodModel{DB: db}
+		userModel := UserModel{DB: db}
+		
+		// Setup: Insert a user and a mood to delete.
+		user := &User{ Name: "Test User", Email: "test@example.com", Activated: true }
+		_ = user.Password.Set("password123")
+		_ = userModel.Insert(user)
+		mood := &Mood{ Title: "To Be Deleted", Content: "...", Emotion: "Ephemeral", Emoji: "👻", Color: "#000000", UserID: user.ID }
+		_ = moodModel.Insert(mood)
+		
+		// Delete the mood.
+		err := moodModel.Delete(mood.ID)
+		assert.NoError(t, err)
+		
+		// Try to retrieve the deleted mood.
+		deletedMood, err := moodModel.Get(mood.ID)
+		
+		// Assert that we get a "record not found" error.
+		assert.Error(t, err)
+		assert.Equal(t, ErrRecordNotFound, err)
+		assert.Nil(t, deletedMood)
+	})
 }
