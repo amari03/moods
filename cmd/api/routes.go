@@ -15,6 +15,10 @@ func (a *applicationDependencies) routes() http.Handler {
 	// HealthCheck handler
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", a.healthCheckHandler)
 
+	// REGISTER THE NEW QUOTE ROUTE
+	// This endpoint can be public, no authentication needed.
+	router.HandlerFunc(http.MethodGet, "/api/v1/quote", a.getQuoteHandler)
+
 	// Mood routes (ALL PROTECTED)
 	router.HandlerFunc(http.MethodGet, "/v1/moods", a.requireActivatedUser(a.listMoodsHandler))
 	router.HandlerFunc(http.MethodPost, "/v1/moods", a.requireActivatedUser(a.createMoodHandler))

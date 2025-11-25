@@ -9,9 +9,11 @@ import (
 	"time"
 	"sync"
 	"strings"
+	"net/http"
 
 	"feel-flow-api/internal/mailer"
 	"feel-flow-api/internal/data"
+	"feel-flow-api/internal/quotes"
 
 	_ "github.com/lib/pq"
 )
@@ -40,7 +42,8 @@ type applicationDependencies struct {
 	config serverConfig
 	logger *slog.Logger
 	models data.Models
-	mailer mailer.Mailer 
+	mailer mailer.Mailer
+	quotes *quotes.Client 
 	wg     sync.WaitGroup
 }
 
@@ -85,6 +88,7 @@ func main() {
 		logger: logger,
 		models: data.NewModels(db),
 		mailer: mailer.New(settings.smtp.host, settings.smtp.port, settings.smtp.username, settings.smtp.password, settings.smtp.sender),
+		quotes: quotes.NewClient(),
 	}
 
 	err = appInstance.serve()
@@ -109,4 +113,26 @@ func openDB(settings serverConfig) (*sql.DB, error) {
     }
 
     return db, nil
+}
+
+// In a handlers file or in main.go
+
+// getQuoteHandler handles requests for a random quote.
+func (app *applicationDependencies) getQuoteHandler(w http.ResponseWriter, r *http.Request) {
+	// Call our new service method.
+	quote, err := app.quotes.GetRandomQuote(r.Context())
+	if err != nil {
+		// I'm assuming you have a serverErrorResponse helper.
+		// If not, you can just log the error and write a 500 status.
+		app.serverErrorResponse(w, r, err) 
+		return
+	}
+
+	envelope := map[string]any{"quote": quote}
+
+	// Pass the envelope to your writeJSON helper.
+	err = app.writeJSON(w, http.StatusOK, envelope, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }
