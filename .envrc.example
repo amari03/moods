@@ -1,0 +1,8 @@
+export FEEL_FLOW_DB_DSN="postgres://username:password@localhost/feel_flow_db?sslmode=disable"
+
+# SMTP credentials for the mailer (e.g., from Mailtrap)
+export SMTP_HOST="your_smtp_host"
+export SMTP_PORT="2525"
+export SMTP_USERNAME="your_smtp_username"
+export SMTP_PASSWORD="your_smtp_password"
+export SMTP_SENDER="Feel Flow <no-reply@yourdomain.com>"
