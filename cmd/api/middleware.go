@@ -4,12 +4,13 @@ import (
 	"errors"
 	"feel-flow-api/internal/data"
 	"feel-flow-api/internal/validator"
-	"golang.org/x/time/rate"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/time/rate"
 )
 
 // recoverPanic recovers from any panics and responds with a 500 Internal Server Error.
@@ -72,6 +73,7 @@ func (app *applicationDependencies) rateLimit(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
 /*
 func (app *applicationDependencies) rateLimitExceededResponse(w http.ResponseWriter, r *http.Request) {
 	message := "rate limit exceeded"
@@ -144,35 +146,21 @@ func (a *applicationDependencies) requireActivatedUser(next http.HandlerFunc) ht
 
 func (a *applicationDependencies) enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Add the "Vary: Origin" header.
-		w.Header().Add("Vary", "Origin")
+		// Set the header to allow ANY origin (*)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 
-		// Add a Vary header for the request method for preflight requests.
-		w.Header().Add("Vary", "Access-Control-Request-Method")
+		// Allow specific methods
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH")
 
-		origin := r.Header.Get("Origin")
+		// Allow specific headers (Authorization is crucial for tokens)
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 
-		if origin != "" && len(a.config.cors.trustedOrigins) > 0 {
-			for i := range a.config.cors.trustedOrigins {
-				if origin == a.config.cors.trustedOrigins[i] {
-					w.Header().Set("Access-Control-Allow-Origin", origin)
-
-					// Check if the request is a preflight request.
-					if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
-						// Set the necessary preflight response headers.
-						w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, PUT, PATCH, DELETE")
-						w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-
-						// Write the headers along with a 200 OK status and return.
-						w.WriteHeader(http.StatusOK)
-						return
-					}
-					break
-				}
-			}
+		// Handle "Preflight" requests (Browser asks "Can I talk to you?")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
 		}
 
-		// Call the next handler in the chain.
 		next.ServeHTTP(w, r)
 	})
 }

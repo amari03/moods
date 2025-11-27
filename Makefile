@@ -30,4 +30,4 @@ db/migrations/new:
 .PHONY: db/migrations/up
 db/migrations/up:
 	@echo 'Running up migrations...'
-	migrate -path ./migrations -database ${FEEL_FLOW_DB_DSN} up
+	migrate -path ./migrations -database "postgres://postgres:2020151994@localhost/feel_flow_db?sslmode=disable" up
