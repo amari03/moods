@@ -1,10 +1,10 @@
 # API Usage Examples (cURL)
-The base URL for all endpoints is `http://localhost:4000/api/v1`.  
+The base URL for all endpoints is `http://localhost:4000/v1`.  
 
 **Authentication**
 1. Register a new user
 ```Bash
-curl -X POST http://localhost:4000/api/v1/users \
+curl -X POST http://localhost:4000/v1/users \
 -H "Content-Type: application/json" \
 -d '{
   "name": "John Doe",
@@ -15,7 +15,7 @@ curl -X POST http://localhost:4000/api/v1/users \
 2. Get an authentication token (Log in)
 After registering, the user must be activated (check your email if using the mailer). Then, log in to get a JWT.
 ```Bash
-curl -X POST http://localhost:4000/api/v1/tokens/authentication \
+curl -X POST http://localhost:4000/v1/tokens/authentication \
 -H "Content-Type: application/json" \
 -d '{
   "email": "john.doe@example.com",
@@ -34,7 +34,7 @@ TOKEN="<YOUR_JWT_TOKEN>"
 ```
 1. Create a new mood entry
 ```Bash
-curl -X POST http://localhost:4000/api/v1/moods \
+curl -X POST http://localhost:4000/v1/moods \
 -H "Authorization: Bearer $TOKEN" \
 -H "Content-Type: application/json" \
 -d '{
@@ -45,7 +45,7 @@ curl -X POST http://localhost:4000/api/v1/moods \
 ```
 2. Get all mood entries (with filtering and sorting)
 ```Bash
-curl -X GET "http://localhost:4000/api/v1/moods?page=1&page_size=5&sort=-created_at" \
+curl -X GET "http://localhost:4000/v1/moods?page=1&page_size=5&sort=-created_at" \
 -H "Authorization: Bearer $TOKEN"
 ```
 3. Update a mood entry
@@ -53,7 +53,7 @@ curl -X GET "http://localhost:4000/api/v1/moods?page=1&page_size=5&sort=-created
 # First, get the ID of a mood you want to update
 MOOD_ID="your-mood-id-here"
 
-curl -X PATCH http://localhost:4000/api/v1/moods/$MOOD_ID \
+curl -X PATCH http://localhost:4000/v1/moods/$MOOD_ID \
 -H "Authorization: Bearer $TOKEN" \
 -H "Content-Type: application/json" \
 -d '{
