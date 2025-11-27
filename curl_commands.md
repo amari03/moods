@@ -7,8 +7,8 @@ The base URL for all endpoints is `http://localhost:4000/v1`.
 curl -X POST http://localhost:4000/v1/users \
 -H "Content-Type: application/json" \
 -d '{
-  "name": "John Doe",
-  "email": "john.doe@example.com",
+  "name": "Joana Doe",
+  "email": "Joana@example.com",
   "password": "a-strong-password"
 }'
 ```
@@ -18,7 +18,7 @@ After registering, the user must be activated (check your email if using the mai
 curl -X POST http://localhost:4000/v1/tokens/authentication \
 -H "Content-Type: application/json" \
 -d '{
-  "email": "john.doe@example.com",
+  "email": "Joana@example.com",
   "password": "a-strong-password"
 }'
 ```
@@ -40,7 +40,9 @@ curl -X POST http://localhost:4000/v1/moods \
 -d '{
   "title": "A Productive Day",
   "content": "Finished all my tasks for the day and worked on the Feel-Flow project.",
-  "emotions": ["happy", "focused", "accomplished"]
+  "emotion": "happy",
+  "emoji": "😊",
+  "color": "#FFC0CB"
 }'
 ```
 2. Get all mood entries (with filtering and sorting)

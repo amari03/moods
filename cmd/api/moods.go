@@ -188,7 +188,7 @@ func (a *applicationDependencies) listMoodsHandler(w http.ResponseWriter, r *htt
 	input.Filters.Sort = a.getSingleQueryParameter(qs, "sort", "id")
 
 	// Add the allowed sort values.
-	input.Filters.SortSafeList = []string{"id", "title", "updated_at", "-id", "-title", "-updated_at"}
+	input.Filters.SortSafeList = []string{"id", "title", "updated_at", "-id", "-title", "-updated_at", "-created_at"}
 
 	if data.ValidateFilters(v, input.Filters); !v.IsEmpty() {
 		a.failedValidationResponse(w, r, v.Errors)
