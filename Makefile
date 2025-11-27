@@ -7,13 +7,13 @@ run:
 	@go run ./cmd/api \
 	-port=4000 \
 	-env=development \
-	-db-dsn="postgres://postgres:2020151994@localhost/feel_flow_db?sslmode=disable" \
-	-smtp-host="sandbox.smtp.mailtrap.io" \
-	-smtp-port="2525" \
-	-smtp-username="b3996384cb2b0b" \
-	-smtp-password="36ad310cfaca52" \
-	-smtp-sender="Feel Flow <no-reply@feelflow.com>" \
-	-cors-trusted-origins="*"
+	-db-dsn=${FEEL_FLOW_DB_DSN} \
+	-smtp-host=${SMTP_HOST} \
+	-smtp-port=${SMTP_PORT} \
+	-smtp-username=${SMTP_USERNAME} \
+	-smtp-password=${SMTP_PASSWORD} \
+	-smtp-sender=${SMTP_SENDER} \
+	-cors-trusted-origins="http://localhost:3000 http://localhost"
 
 ## db/psql: connect to the database using psql (terminal)
 .PHONY: db/psql
