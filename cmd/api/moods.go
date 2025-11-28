@@ -23,21 +23,24 @@ func (a *applicationDependencies) createMoodHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
+	// --- FIX: You must define 'user' here before using it below ---
+	user := a.contextGetUser(r)
+
 	mood := &data.Mood{
 		Title:   input.Title,
 		Content: input.Content,
 		Emotion: input.Emotion,
 		Emoji:   input.Emoji,
 		Color:   input.Color,
-		UserID:  1, // Hardcode user ID for now
+		UserID:  user.ID, // Now 'user' is defined, so this works!
 	}
 
 	v := validator.New()
 
 	if data.ValidateMood(v, mood); !v.IsEmpty() {
-        a.failedValidationResponse(w, r, v.Errors)
-        return
-    }
+		a.failedValidationResponse(w, r, v.Errors)
+		return
+	}
 
 	err = a.models.Moods.Insert(mood)
 	if err != nil {
@@ -195,7 +198,11 @@ func (a *applicationDependencies) listMoodsHandler(w http.ResponseWriter, r *htt
 		return
 	}
 
-	moods, metadata, err := a.models.Moods.GetAll(input.Title, input.Emotion, input.Filters)
+	// --- NEW CHANGE: Get the current user ---
+	user := a.contextGetUser(r)
+
+	// --- NEW CHANGE: Pass user.ID to GetAll ---
+	moods, metadata, err := a.models.Moods.GetAll(input.Title, input.Emotion, user.ID, input.Filters)
 	if err != nil {
 		a.serverErrorResponse(w, r, err)
 		return

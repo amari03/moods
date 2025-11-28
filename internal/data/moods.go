@@ -93,21 +93,23 @@ func (m *MoodModel) Get(id int64) (*Mood, error) {
 	return &mood, nil
 }
 
-// GetAll returns a paginated slice of moods.
-func (m MoodModel) GetAll(title string, emotion string, filters Filters) ([]*Mood, Metadata, error) {
-    // Use a window function to get the total number of records.
+// GetAll returns a paginated slice of moods FOR A SPECIFIC USER.
+func (m MoodModel) GetAll(title string, emotion string, userID int64, filters Filters) ([]*Mood, Metadata, error) {
+    // Update the query to filter by user_id = $3
     query := fmt.Sprintf(`
         SELECT COUNT(*) OVER(), id, created_at, updated_at, title, content, emotion, emoji, color
         FROM moods
-        WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
+        WHERE user_id = $3
+        AND (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
         AND (to_tsvector('simple', emotion) @@ plainto_tsquery('simple', $2) OR $2 = '')
         ORDER BY %s %s, id ASC
-        LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
+        LIMIT $4 OFFSET $5`, filters.sortColumn(), filters.sortDirection())
 
     ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
     defer cancel()
 
-    args := []interface{}{title, emotion, filters.limit(), filters.offset()}
+    // Pass userID as the 3rd argument
+    args := []interface{}{title, emotion, userID, filters.limit(), filters.offset()}
 
     rows, err := m.DB.QueryContext(ctx, query, args...)
     if err != nil {
@@ -121,7 +123,7 @@ func (m MoodModel) GetAll(title string, emotion string, filters Filters) ([]*Moo
     for rows.Next() {
         var mood Mood
         err := rows.Scan(
-            &totalRecords, // Scan the total count
+            &totalRecords,
             &mood.ID,
             &mood.CreatedAt,
             &mood.UpdatedAt,
