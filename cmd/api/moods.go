@@ -173,6 +173,24 @@ func (a *applicationDependencies) deleteMoodHandler(w http.ResponseWriter, r *ht
 	}
 }
 
+func (a *applicationDependencies) deleteAllMoodsHandler(w http.ResponseWriter, r *http.Request) {
+    // 1. Get the authenticated user from the request context
+    user := a.contextGetUser(r)
+
+    // 2. Call the database model to delete all entries for this specific user ID
+    err := a.models.Moods.DeleteAllForUser(user.ID)
+    if err != nil {
+        a.serverErrorResponse(w, r, err)
+        return
+    }
+
+    // 3. Return a success message
+    err = a.writeJSON(w, http.StatusOK, envelope{"message": "all moods successfully deleted"}, nil)
+    if err != nil {
+        a.serverErrorResponse(w, r, err)
+    }
+}
+
 func (a *applicationDependencies) listMoodsHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Title   string

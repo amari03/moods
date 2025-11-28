@@ -13,7 +13,7 @@ run:
 	-smtp-username=${SMTP_USERNAME} \
 	-smtp-password=${SMTP_PASSWORD} \
 	-smtp-sender=${SMTP_SENDER} \
-	-cors-trusted-origins="http://localhost:3000 http://localhost"
+	-cors-trusted-origins="http://localhost"
 
 ## db/psql: connect to the database using psql (terminal)
 .PHONY: db/psql

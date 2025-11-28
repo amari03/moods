@@ -18,12 +18,38 @@ The Feel Flow Team
 <!doctype html>
 <html>
 <head>
+{{define "subject"}}Welcome to the Feel Flow Community!{{end}}
+
+{{define "plainBody"}}
+Hi,
+
+Thanks for signing up for a Feel Flow account. We're excited to have you on board!
+
+Please send a `PUT` request to the `/v1/users/activated` endpoint with the following JSON body to activate your account:
+{"token": "{{.activationToken}}"}
+
+Please note that this is a one-time use token and it will expire in 3 days.
+
+Thanks,
+The Feel Flow Team
+{{end}}
+
+{{define "htmlBody"}}
+<!doctype html>
+<html>
+<head>
     <meta name="viewport" content="width=device-width" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 </head>
 <body>
     <p>Hi,</p>
     <p>Thanks for signing up for a Feel Flow account! We're excited to have you on board!</p>
+<<<<<<< HEAD
+    <p>Please click the link below to activate your account:</p>
+    <p><a href="http://localhost:3000/#/activate?token={{.activationToken}}">Activate Account</a></p>
+    <p>Or send a request to the <code>PUT /v1/users/activated</code> endpoint with the following JSON body:</p>
+    <pre><code>{"token": "{{.activationToken}}"}</code></pre>
+=======
     
     <p>Please click the button below to activate your account:</p>
     
@@ -37,6 +63,7 @@ The Feel Flow Team
     <p>Or copy and paste this link into your browser:</p>
     <p>http://localhost:3000/#/activate?token={{.activationToken}}</p>
     
+>>>>>>> 910030558eaaad6e5d3a4a06d45e97a60bb8eeed
     <p>Please note that this is a one-time use token and it will expire in 3 days.</p>
     <p>Thanks,</p>
     <p>The Feel Flow Team</p>

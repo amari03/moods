@@ -25,6 +25,7 @@ func (a *applicationDependencies) routes() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/v1/moods/:id", a.requireActivatedUser(a.showMoodHandler))
 	router.HandlerFunc(http.MethodPatch, "/v1/moods/:id", a.requireActivatedUser(a.updateMoodHandler))
 	router.HandlerFunc(http.MethodDelete, "/v1/moods/:id", a.requireActivatedUser(a.deleteMoodHandler))
+	router.HandlerFunc(http.MethodDelete, "/v1/moods", a.requireActivatedUser(a.deleteAllMoodsHandler))
 
 	// User routes (some public, some protected)
 	router.HandlerFunc(http.MethodPost, "/v1/users", a.registerUserHandler)
