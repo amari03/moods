@@ -99,6 +99,12 @@ class ApiService {
       return []; 
     }
   }
+  
+  // --- NEW: Check if user is logged in ---
+  static Future<bool> isLoggedIn() async {
+    final token = await getToken();
+    return token != null && token.isNotEmpty;
+  }
 
   // --- NEW: CREATE MOOD (Fixed for your Backend Structure) ---
   static Future<bool> createMood({
