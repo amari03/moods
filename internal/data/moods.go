@@ -196,3 +196,15 @@ func (m MoodModel) Delete(id int64) error {
 
 	return nil
 }
+
+func (m MoodModel) DeleteAllForUser(userID int64) error {
+    query := `DELETE FROM moods WHERE user_id = $1`
+
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
+
+    // We don't need to check rowsAffected here. 
+    // If the user has 0 moods, the operation is still considered a "success" (no error).
+    _, err := m.DB.ExecContext(ctx, query, userID)
+    return err
+}
