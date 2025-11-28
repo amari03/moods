@@ -37,7 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString();
+          // Clean up the error message for the user
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
           _isLoading = false;
         });
       }
@@ -66,9 +67,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 100,
                     margin: const EdgeInsets.only(bottom: 16),
                     alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
                     child: const Text(
                       '😊',
-                      style: TextStyle(fontSize: 72),
+                      style: TextStyle(fontSize: 60),
                     ),
                   ),
                   
@@ -91,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 48),
 
-                  // Error Message
+                  // Error Message Box
                   if (_errorMessage != null)
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -112,6 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: const TextStyle(
                                 color: Color(0xFFDC2626),
                                 fontSize: 14,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),

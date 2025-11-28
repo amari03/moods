@@ -232,16 +232,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           await context.push('/add-mood');
           if (mounted) _refreshData();
         } else {
-          // Normal Tab Switch
+          // Switch Tab
           setState(() => _selectedIndex = index);
           
-          // NEW: If switching back to Home (0), refresh the User Name!
+          // FIX: If switching back to Home (Index 0), refresh EVERYTHING!
           if (index == 0) {
-            _loadUserData();
+            _loadUserData(); // Refresh Name (in case you changed it)
+            _refreshData();  // Refresh List (in case you deleted notes)
           }
         }
       }
-
+      
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [

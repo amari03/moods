@@ -36,21 +36,21 @@ class SettingsScreen extends StatelessWidget {
     if (confirm == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Deleting..."),
+          content: const Text("Deleting all notes..."),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
+
       try {
-        final moods = await ApiService.getMoods();
-        for (var mood in moods) {
-          await ApiService.deleteMood(mood['id']);
-        }
+        await ApiService.deleteAllMoods();
+        
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text("All notes deleted."),
+              content: const Text("All notes deleted successfully."),
               behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.green,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
           );
@@ -59,7 +59,7 @@ class SettingsScreen extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text("Failed to delete some notes."),
+              content: Text("Failed to delete: $e"),
               backgroundColor: const Color(0xFFDC2626),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -98,11 +98,28 @@ class SettingsScreen extends StatelessWidget {
     );
 
     if (confirm == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Deleting Account and Data...")),
+      );
+
       try {
+        // 1. Delete all moods first (Prevents Database Errors)
+        try {
+          await ApiService.deleteAllMoods();
+        } catch (_) {
+          // Continue even if this fails (e.g. user has no moods)
+        }
+
+        // 2. Delete the User
         await ApiService.deleteUserAccount();
+
+        // 3. Clear Local Storage
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
+
+        // 4. Redirect to Login
         if (context.mounted) context.go('/');
+        
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -135,7 +152,7 @@ class SettingsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            // FIX 1: Use .withValues(alpha: ...)
+            // FIXED: Updated to .withValues for new Flutter
             color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
@@ -162,7 +179,7 @@ class SettingsScreen extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          // FIX 2: Use .withValues(alpha: ...)
+          // FIXED: Updated to .withValues
           color: (iconColor ?? const Color(0xFF8B5CF6)).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
         ),

@@ -10,6 +10,7 @@ class ApiService {
     return prefs.getString('token');
   }
 
+// --- UPDATED LOGIN FUNCTION ---
   static Future<void> login(String email, String password) async {
     final url = Uri.parse('$baseUrl/v1/tokens/authentication');
     final response = await http.post(
@@ -27,11 +28,23 @@ class ApiService {
       await prefs.setString('token', token);
       await prefs.setString('userName', user['name']);
       await prefs.setInt('userId', user['id']);
-    } else {
-      throw Exception('Login failed: ${response.body}');
+    } 
+    // Handle "Account not found" or "Wrong Password" (Usually 401)
+    else if (response.statusCode == 401) {
+      throw Exception("Incorrect email or password.\nDon't have an account? Please Sign Up!");
+    } 
+    // Handle other errors
+    else {
+      // Try to parse the backend message, otherwise generic error
+      try {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? "Login failed.");
+      } catch (_) {
+        throw Exception("Something went wrong. Please try again.");
+      }
     }
   }
-
+  
   static Future<bool> signUp(String name, String email, String password) async {
     final url = Uri.parse('$baseUrl/v1/users');
     final response = await http.post(
@@ -222,8 +235,8 @@ class ApiService {
     }
   }
 
-  // --- NEW: CHANGE PASSWORD ---
-  static Future<bool> changePassword(String newPassword) async {
+// --- UPDATED: CHANGE PASSWORD ---
+  static Future<void> changePassword(String newPassword) async {
     final token = await getToken();
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getInt('userId');
@@ -238,10 +251,17 @@ class ApiService {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
+      // Backend expects "password" field
       body: jsonEncode({'password': newPassword}),
     );
 
-    return response.statusCode == 200;
+    if (response.statusCode == 200) {
+      return; // Success
+    } else {
+      // Parse backend error (e.g. "password must be at least 8 bytes")
+      final errorData = jsonDecode(response.body);
+      throw Exception(errorData['error'] ?? "Failed to change password");
+    }
   }
 
   // --- NEW: DELETE USER ACCOUNT ---
@@ -262,4 +282,23 @@ class ApiService {
     return response.statusCode == 200;
   }
 
+  // --- NEW: DELETE ALL MOODS (Single API Call) ---
+  static Future<void> deleteAllMoods() async {
+    final token = await getToken();
+    if (token == null) throw Exception("Not authenticated");
+
+    // This hits the specific route you defined in routes.go
+    final url = Uri.parse('$baseUrl/v1/moods'); 
+    
+    final response = await http.delete(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete moods: ${response.body}');
+    }
+  }
+
 }
+
