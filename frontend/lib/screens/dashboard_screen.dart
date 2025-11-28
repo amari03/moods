@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
 import '../api/api_service.dart';
+import 'stats_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -205,7 +206,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final List<Widget> pages = [
       _buildHomeTab(), 
       Container(),    
-      const Center(child: Text("Stats Page (Coming Soon)")),
+       const StatsScreen(),
       _buildSettingsTab(),
     ];
 
