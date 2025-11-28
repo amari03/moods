@@ -226,14 +226,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _onItemTapped(int index) async {
-    if (index == 1) {
-      await context.push('/add-mood');
-      if (mounted) _refreshData();
-    } else {
-      setState(() => _selectedIndex = index);
-    }
-  }
+    void _onItemTapped(int index) async {
+        if (index == 1) {
+          // Add Mood Logic
+          await context.push('/add-mood');
+          if (mounted) _refreshData();
+        } else {
+          // Normal Tab Switch
+          setState(() => _selectedIndex = index);
+          
+          // NEW: If switching back to Home (0), refresh the User Name!
+          if (index == 0) {
+            _loadUserData();
+          }
+        }
+      }
 
   @override
   Widget build(BuildContext context) {
