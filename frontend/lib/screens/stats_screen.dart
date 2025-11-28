@@ -17,7 +17,6 @@ class _StatsScreenState extends State<StatsScreen> {
     _moodsFuture = ApiService.getMoods();
   }
 
-  // Helper to parse color string
   Color _parseColor(String? colorString) {
     if (colorString == null || colorString.isEmpty) return Colors.deepPurple;
     try {
@@ -30,8 +29,14 @@ class _StatsScreenState extends State<StatsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA), // Soft off-white background
       appBar: AppBar(
-        title: const Text("Your Statistics"),
+        title: const Text(
+          "Insights",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: Colors.black87),
+        ),
+        backgroundColor: const Color(0xFFF8F9FA),
+        elevation: 0,
         centerTitle: false,
         automaticallyImplyLeading: false, 
       ),
@@ -52,19 +57,26 @@ class _StatsScreenState extends State<StatsScreen> {
           final colorStats = _getColorStats(moods);
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 1. TOTAL COUNT CARD
                 _buildTotalCard(totalCount),
                 const SizedBox(height: 20),
 
                 // 2. TOP EMOJIS CARD
+                const Text("Top Vibes", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                const SizedBox(height: 10),
                 _buildTopEmojisCard(topEmojis),
-                const SizedBox(height: 20),
+                const SizedBox(height: 25),
 
                 // 3. COLOR PALETTE CARD
+                const Text("Mood Palette", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                const SizedBox(height: 10),
                 _buildColorPaletteCard(colorStats, totalCount),
+                
+                const SizedBox(height: 40), // Bottom padding
               ],
             ),
           );
@@ -78,9 +90,24 @@ class _StatsScreenState extends State<StatsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.bar_chart, size: 80, color: Colors.grey.shade300),
+          Container(
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              color: Colors.deepPurple.withValues(alpha: 0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.bar_chart_rounded, size: 60, color: Colors.deepPurple.shade200),
+          ),
           const SizedBox(height: 20),
-          const Text("Log some moods to see your stats!", style: TextStyle(color: Colors.grey)),
+          Text(
+            "No stats available yet",
+            style: TextStyle(color: Colors.grey.shade800, fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 5),
+          const Text(
+            "Log some moods to see your insights!",
+            style: TextStyle(color: Colors.grey),
+          ),
         ],
       ),
     );
@@ -88,94 +115,156 @@ class _StatsScreenState extends State<StatsScreen> {
 
   Widget _buildTotalCard(int count) {
     return Container(
-      padding: const EdgeInsets.all(20),
       width: double.infinity,
+      padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [Colors.deepPurple.shade400, Colors.deepPurple.shade200]),
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [Colors.deepPurple.shade400, Colors.deepPurple.shade300],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            // FIX: Use .withValues(alpha: ...) instead of .withOpacity(...)
             color: Colors.deepPurple.withValues(alpha: 0.3), 
-            blurRadius: 10, 
-            offset: const Offset(0, 5)
+            blurRadius: 15, 
+            offset: const Offset(0, 8)
           )
         ],
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text("Total Moods Logged", style: TextStyle(color: Colors.white70, fontSize: 16)),
-          const SizedBox(height: 5),
-          Text(
-            "$count", 
-            style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Total Entries", 
+                style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500)
+              ),
+              const SizedBox(height: 5),
+              Text(
+                "$count", 
+                style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.bold)
+              ),
+            ],
           ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 30),
+          )
         ],
       ),
     );
   }
 
   Widget _buildTopEmojisCard(List<MapEntry<String, int>> topEmojis) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Your Top Vibes", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 15),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: topEmojis.map((entry) {
-                return Column(
-                  children: [
-                    Text(entry.key, style: const TextStyle(fontSize: 40)), // The Emoji
-                    const SizedBox(height: 5),
-                    Text("${entry.value} times", style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                  ],
-                );
-              }).toList(),
-            ),
-          ],
-        ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: topEmojis.map((entry) {
+          return Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.grey.shade100),
+                ),
+                child: Text(entry.key, style: const TextStyle(fontSize: 32)),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "${entry.value} times", 
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12, fontWeight: FontWeight.w600)
+              ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
 
   Widget _buildColorPaletteCard(Map<String, int> colorStats, int total) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Your Mood Palette", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 15),
-            // Custom Progress Bar Stack
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: SizedBox(
-                height: 30,
-                child: Row(
-                  children: colorStats.entries.map((entry) {
-                    final color = _parseColor(entry.key);
-                    final percentage = entry.value / total;
-                    return Expanded(
-                      flex: (percentage * 100).toInt(),
-                      child: Container(color: color),
-                    );
-                  }).toList(),
-                ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Custom Progress Bar Stack
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 35,
+              child: Row(
+                children: colorStats.entries.map((entry) {
+                  final color = _parseColor(entry.key);
+                  final percentage = entry.value / total;
+                  return Expanded(
+                    flex: (percentage * 100).toInt(),
+                    child: Container(
+                      color: color,
+                      child: Center(
+                        // Only show % if it fits
+                        child: percentage > 0.1 
+                          ? Text(
+                              "${(percentage * 100).toInt()}%", 
+                              style: TextStyle(
+                                color: color.computeLuminance() > 0.5 ? Colors.black54 : Colors.white70,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold
+                              )
+                            ) 
+                          : const SizedBox(),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
-            const SizedBox(height: 10),
-            Text("Based on the colors you pick for your notes.", style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontStyle: FontStyle.italic)),
-          ],
-        ),
+          ),
+          const SizedBox(height: 15),
+          Row(
+            children: [
+              Icon(Icons.info_outline, size: 14, color: Colors.grey.shade400),
+              const SizedBox(width: 5),
+              Text(
+                "Your mood colors distribution", 
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontStyle: FontStyle.italic)
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
