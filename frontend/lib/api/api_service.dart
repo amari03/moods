@@ -187,19 +187,19 @@ class ApiService {
     return response.statusCode == 200;
   }
 
-  // --- NEW: UPDATE USER PROFILE (Name/Email) ---
-  static Future<bool> updateUserProfile({String? name, String? email}) async {
+// --- UPDATED: UPDATE USER PROFILE ---
+  static Future<void> updateUserProfile({String? name, String? email}) async {
     final token = await getToken();
     final prefs = await SharedPreferences.getInstance();
-    final id = prefs.getInt('userId'); // Get ID from storage
+    final id = prefs.getInt('userId');
 
     if (token == null || id == null) throw Exception("Not authenticated");
 
     final url = Uri.parse('$baseUrl/v1/users/$id');
     
     final Map<String, dynamic> body = {};
-    if (name != null) body['name'] = name;
-    if (email != null) body['email'] = email;
+    if (name != null && name.isNotEmpty) body['name'] = name;
+    if (email != null && email.isNotEmpty) body['email'] = email;
 
     final response = await http.patch(
       url,
@@ -211,11 +211,15 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      // Update local storage if name changed
-      if (name != null) await prefs.setString('userName', name);
-      return true;
+      // Success! Update local storage immediately
+      final data = jsonDecode(response.body);
+      final newName = data['user']['name']; // Ensure we get the confirmed name from server
+      await prefs.setString('userName', newName);
+    } else {
+      // Failure! Read the error message from the backend
+      final errorData = jsonDecode(response.body);
+      throw Exception(errorData['error'] ?? "Failed to update profile (${response.statusCode})");
     }
-    return false;
   }
 
   // --- NEW: CHANGE PASSWORD ---
@@ -257,5 +261,5 @@ class ApiService {
 
     return response.statusCode == 200;
   }
-  
+
 }
