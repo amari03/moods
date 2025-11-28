@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
 import '../api/api_service.dart';
 import 'stats_screen.dart';
+import 'settings_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -207,6 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _buildHomeTab(), 
       Container(),    
        const StatsScreen(),
+       const SettingsScreen(),
       _buildSettingsTab(),
     ];
 

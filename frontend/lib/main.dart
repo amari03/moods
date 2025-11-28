@@ -6,6 +6,8 @@ import 'screens/activation_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/add_mood_screen.dart';
 import 'api/api_service.dart'; // Import ApiService
+import 'screens/edit_profile_screen.dart';   // Import
+import 'screens/change_password_screen.dart'; // Import
 
 void main() {
   runApp(const MyApp());
@@ -68,6 +70,14 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/dashboard',
       builder: (context, state) => const DashboardScreen(),
+    ),
+     GoRoute(
+      path: '/settings/profile',
+      builder: (context, state) => const EditProfileScreen(),
+    ),
+    GoRoute(
+      path: '/settings/password',
+      builder: (context, state) => const ChangePasswordScreen(),
     ),
     // Add/Edit Mood Route
     GoRoute(

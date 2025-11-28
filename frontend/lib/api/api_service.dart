@@ -99,7 +99,7 @@ class ApiService {
       return []; 
     }
   }
-  
+
   // --- NEW: Check if user is logged in ---
   static Future<bool> isLoggedIn() async {
     final token = await getToken();
@@ -186,4 +186,76 @@ class ApiService {
 
     return response.statusCode == 200;
   }
+
+  // --- NEW: UPDATE USER PROFILE (Name/Email) ---
+  static Future<bool> updateUserProfile({String? name, String? email}) async {
+    final token = await getToken();
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getInt('userId'); // Get ID from storage
+
+    if (token == null || id == null) throw Exception("Not authenticated");
+
+    final url = Uri.parse('$baseUrl/v1/users/$id');
+    
+    final Map<String, dynamic> body = {};
+    if (name != null) body['name'] = name;
+    if (email != null) body['email'] = email;
+
+    final response = await http.patch(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      // Update local storage if name changed
+      if (name != null) await prefs.setString('userName', name);
+      return true;
+    }
+    return false;
+  }
+
+  // --- NEW: CHANGE PASSWORD ---
+  static Future<bool> changePassword(String newPassword) async {
+    final token = await getToken();
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getInt('userId');
+
+    if (token == null || id == null) throw Exception("Not authenticated");
+
+    final url = Uri.parse('$baseUrl/v1/users/$id');
+
+    final response = await http.patch(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'password': newPassword}),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  // --- NEW: DELETE USER ACCOUNT ---
+  static Future<bool> deleteUserAccount() async {
+    final token = await getToken();
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getInt('userId');
+
+    if (token == null || id == null) throw Exception("Not authenticated");
+
+    final url = Uri.parse('$baseUrl/v1/users/$id');
+
+    final response = await http.delete(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    return response.statusCode == 200;
+  }
+  
 }
