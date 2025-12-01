@@ -47,7 +47,7 @@ make run
 2. Verify it's running:
 You should see a log message indicating the server has started, typically on port 4000. You can check the healthcheck endpoint to confirm it's working:
 ```Bash
-curl http://localhost:4000/api/v1/healthcheck
+curl http://localhost:4000/v1/healthcheck
 ```
 You should get a JSON response indicating the status is "available".  
 
@@ -62,3 +62,32 @@ The API is built using the standard Go net/http library and follows a clean, lay
     - `/internal/mailer`: A package for sending emails (e.g., for user activation).
     - `/internal/quotes`: An isolated client for interacting with the third-party Zen Quotes API.
 - **Handlers & Routing**: Handlers for each resource (users, moods) are in their own files. Routes are registered in a central `routes.go` file, which also applies middleware for rate limiting, CORS, and authentication.
+
+# FRONTEND  
+The frontend is a mobile-first web application built with Flutter. Follow these steps to get it running.  
+### **Prerequisites**
+- Flutter SDK: Ensure you have the Flutter SDK installed and the flutter command is available in your terminal. For installation instructions, see the official Flutter documentation.
+- Google Chrome: Required for running the web version of the app.
+
+### **Installation & Setup**  
+1. Navigate to the frontend directory:  
+From the root of the project, `cd` into the frontend folder.
+``` Bash
+cd frontend 
+```
+2. Install dependencies:  
+Run the following command to download all the necessary packages for the Flutter project:
+``` Bash
+flutter pub get
+```
+
+## Running the Frontend
+**Important Note:** Before starting the frontend, make sure the backend server is already running.  
+**Start the frontend:**
+Go back into your frontend directory. Run the application on a stable port (`3000`) so that features like email activation links will work correctly.  
+``` Bash
+# From the frontend folder
+flutter run -d chrome --web-port=3000
+```
+
+The application will launch in a new Chrome window. You can now register, activate, and log in to use the app.

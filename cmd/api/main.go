@@ -122,8 +122,7 @@ func (app *applicationDependencies) getQuoteHandler(w http.ResponseWriter, r *ht
 	// Call our new service method.
 	quote, err := app.quotes.GetRandomQuote(r.Context())
 	if err != nil {
-		// I'm assuming you have a serverErrorResponse helper.
-		// If not, you can just log the error and write a 500 status.
+		
 		app.serverErrorResponse(w, r, err) 
 		return
 	}
